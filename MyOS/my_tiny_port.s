@@ -11,8 +11,9 @@ MY_SVC_Handler:
     ldr	r3, =cur_task_tcb
     ldr	r2, [r3]
     ldr r1, [r2]
-    msr msp, r1
+    msr psp, r1
     isb
+    orr r14, r14, #13
     bx r14
     END
     

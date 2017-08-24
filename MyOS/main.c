@@ -14,16 +14,16 @@ typedef unsigned int stack_st;
 
 void trigger_svc()
 {
-    __asm("svc 0");
+    __asm("svc 2");
 }
 typedef struct
 {
     stack_st *cur_sp;
     stack_st task_sp[256];
 }tcb;
-
-tcb task1_tcb, task2_tcb;
 tcb *cur_task_tcb;
+tcb task0_tcb,task1_tcb, task2_tcb;
+
 
 void task1();
 void task2();
@@ -32,24 +32,30 @@ int init_task_stack(tcb *ptask_tcb,unsigned int stack_size,taskfunc taskfun);
 void task1()
 {
     int i=0;
-    while(i<3){
+    while(1){
         i++;
+        if(!(i%5)){
+            trigger_svc();            
+        }
     }
-    i=0;
-    init_task_stack(&task2_tcb,sizeof(task2_tcb.task_sp),task2); 
-    cur_task_tcb=&task2_tcb;
-    trigger_svc();
 }
 void task2()
 {
     int i=0;
-    while(i<3){
+    while(1){
         i++;
+        if(!(i%5)){
+            trigger_svc();
+        }
     }
-    i=0;
-    init_task_stack(&task1_tcb,sizeof(task1_tcb.task_sp),task1);
-    cur_task_tcb=&task1_tcb;
-    trigger_svc();    
+}
+void change_task()
+{
+    if(cur_task_tcb==&task1_tcb){
+        cur_task_tcb=&task2_tcb;    
+    }else{
+        cur_task_tcb=&task1_tcb;
+    }
 }
 void task_exit()
 {
@@ -67,46 +73,47 @@ int init_task_stack(tcb *ptask_tcb,unsigned int stack_size,taskfunc taskfun)
         *task_sp_tmp++=0;
     }
     ptask_tcb->cur_sp=task_sp_tmp-1;
-    *ptask_tcb->cur_sp=portINITIAL_XPSR;
+    *ptask_tcb->cur_sp=portINITIAL_XPSR; //Fake Push PSR
     ptask_tcb->cur_sp--;
-    *ptask_tcb->cur_sp=(unsigned int)taskfun;
+    *ptask_tcb->cur_sp=(unsigned int)taskfun; //Fake Push PC
     ptask_tcb->cur_sp--;
-    *ptask_tcb->cur_sp=(unsigned int)task_exit;
+    *ptask_tcb->cur_sp=(unsigned int)task_exit; //Fake Push LR
     ptask_tcb->cur_sp--;
-#ifdef DEBUG_STACK
-    *ptask_tcb->cur_sp=12;
-    ptask_tcb->cur_sp--;
-    *ptask_tcb->cur_sp=3;
-    ptask_tcb->cur_sp--;
-    *ptask_tcb->cur_sp=2;
-    ptask_tcb->cur_sp--;
-    *ptask_tcb->cur_sp=1;
-    ptask_tcb->cur_sp--;
-    *ptask_tcb->cur_sp=0xFFFFFFF0;
+    ptask_tcb->cur_sp-=4; //Fake Push R12,R3,R2,R1,R0 into
+#if 1
+    *ptask_tcb->cur_sp=0xFFFFFFFb; //Test for R11
+    ptask_tcb->cur_sp--; //Fake Push R4~R11
+    *ptask_tcb->cur_sp=0xFFFFFFFa; //Test for R10
+    ptask_tcb->cur_sp--; //Fake Push R4~R11
+    ptask_tcb->cur_sp--; //Fake Push R4~R11
+    ptask_tcb->cur_sp--; //Fake Push R4~R11
+    ptask_tcb->cur_sp--; //Fake Push R4~R11
+    ptask_tcb->cur_sp--; //Fake Push R4~R11
+    ptask_tcb->cur_sp--; //Fake Push R4~R11
+    *ptask_tcb->cur_sp=0xFFFFFFF5; //Test for R5
+    ptask_tcb->cur_sp--; //Fake Push R4~R11
+    *ptask_tcb->cur_sp=0xFFFFFFF4; //Test for R4 
 #else
-    ptask_tcb->cur_sp-=4;
+    ptask_tcb->cur_sp-=8; //Fake Push R4~R11
 #endif
     return 0;
 }
 int main(void)
 {
     int ret=0;
-    ret=init_task_stack(&task1_tcb,sizeof(task1_tcb.task_sp),task1);
-    ret=init_task_stack(&task2_tcb,sizeof(task2_tcb.task_sp),task2);  
-#if 0
-    int i;
-    //rr_basic_init();
-    for(i=0;i<sizeof(task1_tcb.task_sp)/sizeof(task1_tcb.task_sp[0]);i++){
-        task1_tcb.task_sp[i]=0;
+
+    ret=init_task_stack(&task0_tcb,sizeof(task0_tcb.task_sp),task1);
+    if(ret<0){
+        return -1;
     }
-    task1_tcb.cur_sp=task1_tcb.task_sp+sizeof(task1_tcb.task_sp)/sizeof(task1_tcb.task_sp[0])-sizeof(task1_tcb.task_sp[0]);
-    *task1_tcb.cur_sp=portINITIAL_XPSR;
-    task1_tcb.cur_sp--;
-    *task1_tcb.cur_sp=(unsigned int)task1;
-    task1_tcb.cur_sp--;
-    *task1_tcb.cur_sp=0;
-    task1_tcb.cur_sp-=5;
-#endif
+    ret=init_task_stack(&task1_tcb,sizeof(task1_tcb.task_sp),task1);
+    if(ret<0){
+        return -1;
+    }
+    ret=init_task_stack(&task2_tcb,sizeof(task2_tcb.task_sp),task2);  
+    if(ret<0){
+        return -1;
+    }
     cur_task_tcb=&task1_tcb;
     trigger_svc();
     return ret;

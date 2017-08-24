@@ -15,7 +15,8 @@
         EXTERN  __iar_program_start
         EXTERN  SystemInit
         PUBLIC  __vector_table
-        EXTERN  MY_SVC_Handler
+        IMPORT  MY_SVC_Handler
+        IMPORT  MY_Pend_SVC_Handler
         EXTERN  MY_UsageFault_Handler
 
         DATA
@@ -35,7 +36,7 @@ __vector_table
         DCD     MY_SVC_Handler                       ; SVCall Handler
         DCD     DebugMon_Handler                  ; Debug Monitor Handler
         DCD     0                                 ; Reserved
-        DCD     PendSV_Handler                    ; PendSV Handler
+        DCD     MY_Pend_SVC_Handler                    ; PendSV Handler
         DCD     SysTick_Handler                   ; SysTick Handler
                                                   
         ; External Interrupts                     

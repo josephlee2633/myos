@@ -11,7 +11,12 @@
 /* Private functions ---------------------------------------------------------*/
 typedef void (*taskfunc)( void );
 typedef unsigned int stack_st;
-
+void trigger_task_schedule()
+{
+#define NVIC_PEND_SVC_INT_CTRL_REG		( * ( ( volatile unsigned int * ) 0xe000ed04 ) )
+#define NVIC_PEND_SVC_SET_BIT		( 1UL << 28UL )
+    NVIC_PEND_SVC_INT_CTRL_REG = NVIC_PEND_SVC_SET_BIT;
+}
 void trigger_svc()
 {
     __asm("svc 2");
@@ -35,7 +40,7 @@ void task1()
     while(1){
         i++;
         if(!(i%5)){
-            trigger_svc();            
+            trigger_task_schedule();            
         }
     }
 }
@@ -45,7 +50,7 @@ void task2()
     while(1){
         i++;
         if(!(i%5)){
-            trigger_svc();
+            trigger_task_schedule();
         }
     }
 }
@@ -115,7 +120,7 @@ int main(void)
         return -1;
     }
     cur_task_tcb=&task1_tcb;
-    trigger_svc();
+    trigger_task_schedule();
     return ret;
 }
 

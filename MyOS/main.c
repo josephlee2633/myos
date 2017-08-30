@@ -6,17 +6,13 @@
 
 /* Includes ------------------------------------------------------------------*/
 //#include "gd32f20x.h"
-
+#include "my_tiny_task.h"
+#include "my_tiny_malloc.h"
 /* Private variables ---------------------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 typedef void (*taskfunc)( void );
 typedef unsigned int stack_st;
-void trigger_task_schedule()
-{
-#define NVIC_PEND_SVC_INT_CTRL_REG		( * ( ( volatile unsigned int * ) 0xe000ed04 ) )
-#define NVIC_PEND_SVC_SET_BIT		( 1UL << 28UL )
-    NVIC_PEND_SVC_INT_CTRL_REG = NVIC_PEND_SVC_SET_BIT;
-}
+
 void trigger_svc()
 {
     __asm("svc 2");

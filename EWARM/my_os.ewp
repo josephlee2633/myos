@@ -1950,7 +1950,13 @@
       <name>$PROJ_DIR$\..\MyOS\main.c</name>
     </file>
     <file>
+      <name>$PROJ_DIR$\..\MyOS\my_tiny_malloc.c</name>
+    </file>
+    <file>
       <name>$PROJ_DIR$\..\MyOS\my_tiny_port.s</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\MyOS\my_tiny_task.c</name>
     </file>
   </group>
 </project>
